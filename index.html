@@ -1,3 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AVF Simulator</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    margin: 0;
+    padding: 30px;
+    text-align: center;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* Vital Signs */
+
+.vitals {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 35px;
+}
+
+.vital-box {
+    background: #eef4ff;
+    padding: 22px;
+    border-radius: 15px;
+    width: 230px;
+}
+
+.vital-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 14px;
+}
+
+.vital-value {
+    font-size: 18px;
+    font-weight: normal;
+}
+
+/* Audio Output */
+
+.output-box {
+    background: #f7f7f7;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.output-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.output-buttons button {
+    background: #475569;
+}
+
+/* AVF buttons */
+
+.buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+button {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+.stop {
+    background: #dc2626;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.volume-box {
+    margin-top: 30px;
+}
+
+input[type="range"] {
+    width: 80%;
+}
+
+#status {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+#outputStatus {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 15px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    .vitals {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .vital-box {
+        width: 85%;
+    }
+
+    .buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .output-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+<h1>AVF Simulator</h1>
+
+<div class="subtitle">
+Arteriovenous Fistula Training System
+</div>
+
+
+<h2>Patient Vital Signs</h2>
+
+<div class="vitals">
+
+    <div class="vital-box">
+
+        <div class="vital-title">
+            HEART RATE
+        </div>
+
+        <div class="vital-value">
+            <span id="hr">72</span> BPM
+        </div>
+
+    </div>
+
+
+    <div class="vital-box">
+
+        <div class="vital-title">
+            BLOOD PRESSURE
+        </div>
+
+        <div class="vital-value">
+            <span id="bp">120/80</span> mmHg
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- AUDIO OUTPUT -->
+
+<div class="output-box">
+
+    <h2>Audio Output</h2>
+
+    <div class="output-buttons">
+
+        <button onclick="useCurrentOutput()">
+            This Device
+        </button>
+
+        <button onclick="selectExternalSpeaker()">
+            Select External Speaker
+        </button>
+
+    </div>
+
+    <div id="outputStatus">
+        Output: Default Device
+    </div>
+
+</div>
+
+
+<h2>Select AVF Condition</h2>
+
+
 <div class="buttons">
 
     <button onclick="playSound('Successful AVF.mp3','Successful AVF')">
@@ -16,8 +249,186 @@
         Non-functioning AVF
     </button>
 
-    <button onclick="playSound('AVF Doppler bubble signal(phantom).mp3','Doppler Bubble Signal')">
+    <button onclick="playSound(
+        'AVF Doppler bubble signal(phantom).mp3',
+        'Doppler Bubble Signal'
+    )">
         Doppler Bubble Signal
     </button>
 
 </div>
+
+
+<button class="stop" onclick="stopSound()">
+STOP
+</button>
+
+
+<div class="volume-box">
+
+<h3>Volume</h3>
+
+<input
+    type="range"
+    min="0"
+    max="1"
+    step="0.01"
+    value="0.7"
+    oninput="changeVolume(this.value)"
+>
+
+</div>
+
+
+<div id="status">
+Ready
+</div>
+
+
+<audio id="audioPlayer"></audio>
+
+</div>
+
+
+<script>
+
+const player =
+    document.getElementById("audioPlayer");
+
+const statusText =
+    document.getElementById("status");
+
+const outputStatus =
+    document.getElementById("outputStatus");
+
+player.volume = 0.7;
+
+
+/* PLAY AUDIO */
+
+function playSound(file, condition) {
+
+    player.pause();
+    player.currentTime = 0;
+
+    player.src = file;
+
+    player.play()
+    .then(() => {
+
+        statusText.innerText =
+            "Playing: " + condition;
+
+    })
+    .catch(error => {
+
+        statusText.innerText =
+            "Cannot play audio";
+
+        console.log(error);
+
+    });
+}
+
+
+/* STOP */
+
+function stopSound() {
+
+    player.pause();
+
+    player.currentTime = 0;
+
+    statusText.innerText = "Stopped";
+}
+
+
+/* VOLUME */
+
+function changeVolume(value) {
+
+    player.volume = value;
+}
+
+
+/* SELECT EXTERNAL SPEAKER */
+
+async function selectExternalSpeaker() {
+
+    try {
+
+        if (
+            navigator.mediaDevices &&
+            "selectAudioOutput" in navigator.mediaDevices &&
+            typeof player.setSinkId === "function"
+        ) {
+
+            const device =
+                await navigator.mediaDevices.selectAudioOutput();
+
+            await player.setSinkId(device.deviceId);
+
+            outputStatus.innerText =
+                "Output: " +
+                (device.label || "External Speaker");
+
+        }
+
+        else {
+
+            alert(
+                "Your browser cannot select an audio output directly. " +
+                "Connect your Bluetooth speaker in your device settings, " +
+                "then select it as the audio output."
+            );
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.log(error);
+
+        outputStatus.innerText =
+            "Output selection cancelled";
+
+    }
+}
+
+
+/* DEFAULT DEVICE */
+
+async function useCurrentOutput() {
+
+    try {
+
+        if (typeof player.setSinkId === "function") {
+
+            await player.setSinkId("");
+
+        }
+
+        outputStatus.innerText =
+            "Output: Default Device";
+
+    }
+
+    catch(error) {
+
+        console.log(error);
+
+    }
+}
+
+
+player.onended = function() {
+
+    statusText.innerText = "Ready";
+
+};
+
+</script>
+
+</body>
+</html>
